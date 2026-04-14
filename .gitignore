@@ -1,0 +1,8 @@
+node_modules
+dist
+.env
+.env.local
+.DS_Store
+*.log
+portfolio_ecommerce-main
+proj_sql-main
