@@ -1,41 +1,11 @@
 import { useEffect, useRef } from 'react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { useLanguage } from '../context/LanguageContext'
 
 gsap.registerPlugin(ScrollTrigger)
 
-const PROJECTS = [
-  {
-    icon: '🛒',
-    title: 'E-commerce Analytics & Customer Segmentation',
-    meta: { rows: '1,500,000+', type: 'E-commerce · Python + SQL' },
-    desc: 'End-to-end analysis of the Brazilian Olist marketplace. Integrated SQL and Python to extract insights from over 1.5 million records — covering sales performance, logistics accuracy and advanced customer segmentation.',
-    highlights: [
-      'Monthly revenue trend analysis with seasonality detection',
-      'Logistics KPI: delivery delta vs. estimated date (histogram + KDE)',
-      'RFM feature engineering + K-Means clustering for customer profiling',
-      'Sentiment analysis on product reviews via TextBlob',
-    ],
-    tech: ['Python', 'SQL', 'pandas', 'sklearn', 'matplotlib', 'seaborn', 'SQLAlchemy'],
-    github: 'https://github.com/EricaZampella/portfolio_ecommerce',
-  },
-  {
-    icon: '🏗️',
-    title: 'SQL Data Warehouse & Business Intelligence',
-    meta: { rows: '3 sources', type: 'Data Engineering · SQL' },
-    desc: 'Designed and built a fully normalised data warehouse from scratch, integrating CRM and ERP source systems. Delivered a complete suite of business intelligence queries, stored procedures and analytical reports.',
-    highlights: [
-      'Data profiling & multi-layer cleaning pipeline (CRM + ERP)',
-      'Sales performance over time — yearly, monthly, cumulative',
-      'Customer & product reports with behavioural segmentation',
-      'Stored procedures for automated table creation and data load',
-    ],
-    tech: ['MySQL', 'SQL', 'Stored Procedures', 'Window Functions', 'CTEs'],
-    github: 'https://github.com/EricaZampella/proj_sql',
-  },
-]
-
-/* ─── GitHub SVG icon ────────────────────────────────────────── */
+/* ─── SVG Icons ──────────────────────────────────────────────── */
 function GithubIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -44,32 +14,35 @@ function GithubIcon() {
   )
 }
 
-/* ─── Project card with 3D tilt ──────────────────────────────── */
-function ProjectCard({ project }) {
+/* ─── Static project data (non-translatable) ─────────────────── */
+const PROJECT_STATIC = [
+  {
+    icon:   '🛒',
+    rows:   '1,500,000+',
+    tech:   ['Python', 'SQL', 'Pandas', 'Sklearn', 'Matplotlib', 'Seaborn', 'SqlAlchemy'],
+    github: 'https://github.com/EricaZampella/portfolio_ecommerce',
+  },
+  {
+    icon:   '🏗️',
+    rows:   '3 sources',
+    tech:   ['MySQL', 'SQL', 'Stored Procedures', 'Window Functions', 'CTEs'],
+    github: 'https://github.com/EricaZampella/proj_sql',
+  },
+]
+
+/* ─── 3D tilt card ───────────────────────────────────────────── */
+function ProjectCard({ project, tx }) {
   const cardRef = useRef(null)
 
   const onMove = e => {
     const rect = cardRef.current.getBoundingClientRect()
-    const x    = e.clientX - rect.left
-    const y    = e.clientY - rect.top
-    const rx   = ((y - rect.height / 2) / rect.height) * -10
-    const ry   = ((x - rect.width  / 2) / rect.width)  *  10
-    gsap.to(cardRef.current, {
-      rotateX: rx,
-      rotateY: ry,
-      transformPerspective: 900,
-      duration: 0.3,
-      ease: 'power2.out',
-    })
+    const rx   = ((e.clientY - rect.top  - rect.height / 2) / rect.height) * -10
+    const ry   = ((e.clientX - rect.left - rect.width  / 2) / rect.width)  *  10
+    gsap.to(cardRef.current, { rotateX: rx, rotateY: ry, transformPerspective: 900, duration: 0.3, ease: 'power2.out' })
   }
 
   const onLeave = () => {
-    gsap.to(cardRef.current, {
-      rotateX: 0,
-      rotateY: 0,
-      duration: 0.5,
-      ease: 'elastic.out(1, 0.5)',
-    })
+    gsap.to(cardRef.current, { rotateX: 0, rotateY: 0, duration: 0.5, ease: 'elastic.out(1, 0.5)' })
   }
 
   return (
@@ -97,16 +70,16 @@ function ProjectCard({ project }) {
 
       <div className="project-body">
         <div className="project-meta">
-          <span className="highlight">{project.meta.rows}</span>
+          <span className="highlight">{project.rows}</span>
           <span className="dot" />
-          <span>{project.meta.type}</span>
+          <span>{tx.type}</span>
         </div>
 
-        <h3 className="project-title">{project.title}</h3>
-        <p className="project-desc">{project.desc}</p>
+        <h3 className="project-title">{tx.title}</h3>
+        <p className="project-desc">{tx.desc}</p>
 
         <ul className="project-highlights" aria-label="Key features">
-          {project.highlights.map(h => (
+          {[tx.h1, tx.h2, tx.h3, tx.h4].map(h => (
             <li className="highlight-item" key={h}>{h}</li>
           ))}
         </ul>
@@ -123,45 +96,38 @@ function ProjectCard({ project }) {
 
 /* ─── Section ────────────────────────────────────────────────── */
 export default function Projects() {
+  const { t }      = useLanguage()
   const sectionRef = useRef(null)
 
   useEffect(() => {
     const ctx = gsap.context(() => {
       gsap.from('.projects-section-header', {
         scrollTrigger: { trigger: sectionRef.current, start: 'top 80%' },
-        y: 40,
-        opacity: 0,
-        duration: 0.7,
-        ease: 'power3.out',
+        y: 40, opacity: 0, duration: 0.7, ease: 'power3.out',
       })
 
       gsap.to('.project-card', {
-        scrollTrigger: {
-          trigger: '.projects-grid',
-          start: 'top 82%',
-        },
-        y: 0,
-        opacity: 1,
-        duration: 0.8,
-        stagger: 0.18,
-        ease: 'power3.out',
+        scrollTrigger: { trigger: '.projects-grid', start: 'top 82%' },
+        y: 0, opacity: 1, duration: 0.8, stagger: 0.18, ease: 'power3.out',
       })
     }, sectionRef)
 
     return () => ctx.revert()
   }, [])
 
+  const TX = [t.projects.p1, t.projects.p2]
+
   return (
     <section id="projects" ref={sectionRef}>
       <div className="container">
         <div className="section-header projects-section-header">
-          <span className="section-tag">03. projects</span>
-          <h2>Featured Projects</h2>
+          <span className="section-tag">{t.projects.tag}</span>
+          <h2>{t.projects.title}</h2>
         </div>
 
         <div className="projects-grid">
-          {PROJECTS.map(p => (
-            <ProjectCard key={p.title} project={p} />
+          {PROJECT_STATIC.map((p, i) => (
+            <ProjectCard key={p.github} project={p} tx={TX[i]} />
           ))}
         </div>
       </div>
