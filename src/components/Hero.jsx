@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import gsap from 'gsap'
+import { useLanguage } from '../context/LanguageContext'
 
 /* ─── Canvas particle system ─────────────────────────────────── */
 function initParticles(canvas) {
@@ -8,7 +9,7 @@ function initParticles(canvas) {
   let H = canvas.height = window.innerHeight
   let raf
 
-  const COUNT = Math.min(Math.floor((W * H) / 14000), 80)
+  const COUNT  = Math.min(Math.floor((W * H) / 14000), 80)
   const COLORS = ['#00d4ff', '#4f7cff', '#ffffff', '#00ff88']
 
   class P {
@@ -30,7 +31,7 @@ function initParticles(canvas) {
     draw() {
       ctx.beginPath()
       ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2)
-      ctx.fillStyle = this.c
+      ctx.fillStyle   = this.c
       ctx.globalAlpha = this.a
       ctx.fill()
     }
@@ -67,14 +68,13 @@ function initParticles(canvas) {
     raf = requestAnimationFrame(loop)
   }
 
-  function onResize() {
+  const onResize = () => {
     W = canvas.width  = window.innerWidth
     H = canvas.height = window.innerHeight
   }
 
   window.addEventListener('resize', onResize)
   loop()
-
   return () => {
     cancelAnimationFrame(raf)
     window.removeEventListener('resize', onResize)
@@ -96,6 +96,7 @@ function typeInto(el, text, delay, charDelay = 38) {
 
 /* ─── Component ──────────────────────────────────────────────── */
 export default function Hero() {
+  const { t }      = useLanguage()
   const canvasRef  = useRef(null)
   const termRef    = useRef(null)
   const heroRef    = useRef(null)
@@ -103,83 +104,42 @@ export default function Hero() {
   const line2Ref   = useRef(null)
   const line3Ref   = useRef(null)
   const line4Ref   = useRef(null)
-  const nameRef    = useRef(null)
   const subRef     = useRef(null)
   const ctaRef     = useRef(null)
   const scrollRef  = useRef(null)
+  /* Track typing cleanup so language switch doesn't break animation */
+  const typingDone = useRef(false)
 
-  /* Canvas */
+  /* Canvas — runs once */
   useEffect(() => {
-    const cleanup = initParticles(canvasRef.current)
-    return cleanup
+    return initParticles(canvasRef.current)
   }, [])
 
-  /* GSAP timeline */
+  /* GSAP entrance — runs once */
   useEffect(() => {
     const tl = gsap.timeline({ delay: 0.4 })
 
-    /* 1. Terminal appears */
-    tl.to(termRef.current, {
-      opacity: 1,
-      y: 0,
-      duration: 0.7,
-      ease: 'power3.out',
-    })
+    tl.to(termRef.current, { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out' })
 
-    /* 2. Typing lines — driven outside GSAP for letter-by-letter feel */
     tl.call(() => {
       const run = async () => {
         await typeInto(line1Ref.current, 'SELECT * FROM talent', 0)
         await typeInto(line2Ref.current, "WHERE analyst = 'Erica Zampella'", 60)
         await typeInto(line3Ref.current, 'ANALYZING 1,500,000+ records...', 140)
         await typeInto(line4Ref.current, '✓ Insights loaded successfully.', 200)
+        typingDone.current = true
       }
       run()
     })
 
-    /* 3. Hero main text after terminal finishes (~3.2s) */
-    tl.to(heroRef.current, {
-      opacity: 1,
-      duration: 0.01,
-    }, '+=0.05')
-
-    /* Name lines clip reveal */
-    tl.to('.hero-name .line span', {
-      y: 0,
-      duration: 0.9,
-      stagger: 0.12,
-      ease: 'power4.out',
-    }, '-=0.05')
-
-    /* Subtitle */
-    tl.to(subRef.current, {
-      opacity: 1,
-      y: 0,
-      duration: 0.7,
-      ease: 'power3.out',
-    }, '-=0.4')
-
-    /* CTA */
-    tl.to(ctaRef.current, {
-      opacity: 1,
-      y: 0,
-      duration: 0.6,
-      ease: 'power3.out',
-    }, '-=0.4')
-
-    /* Scroll indicator */
-    tl.to(scrollRef.current, {
-      opacity: 1,
-      duration: 0.5,
-    }, '-=0.2')
+    tl.to(heroRef.current, { opacity: 1, duration: 0.01 }, '+=0.05')
+    tl.to('.hero-name .line span', { y: 0, duration: 0.9, stagger: 0.12, ease: 'power4.out' }, '-=0.05')
+    tl.to(subRef.current,  { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out' }, '-=0.4')
+    tl.to(ctaRef.current,  { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out' }, '-=0.4')
+    tl.to(scrollRef.current, { opacity: 1, duration: 0.5 }, '-=0.2')
 
     return () => tl.kill()
   }, [])
-
-  const handleScroll = e => {
-    e.preventDefault()
-    document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })
-  }
 
   return (
     <section id="hero">
@@ -188,12 +148,12 @@ export default function Hero() {
       <div className="aurora aurora-2" aria-hidden="true" />
 
       <div className="hero-content">
-        {/* Terminal card */}
+        {/* Terminal */}
         <div ref={termRef} className="hero-terminal" role="presentation">
           <div className="terminal-bar">
-            <span className="t-dot red"  />
+            <span className="t-dot red"    />
             <span className="t-dot yellow" />
-            <span className="t-dot green" />
+            <span className="t-dot green"  />
             <span className="terminal-title">analyst.sql — query</span>
           </div>
           <div className="terminal-body">
@@ -219,17 +179,14 @@ export default function Hero() {
 
         {/* Main text */}
         <div ref={heroRef} className="hero-main">
-          <p className="hero-eyebrow">Data Analyst</p>
+          <p className="hero-eyebrow">{t.hero.eyebrow}</p>
 
-          <h1 ref={nameRef} className="hero-name" aria-label="Erica Zampella">
+          <h1 className="hero-name" aria-label="Erica Zampella">
             <span className="line"><span>ERICA</span></span>
             <span className="line"><span>ZAMPELLA</span></span>
           </h1>
 
-          <p ref={subRef} className="hero-subtitle">
-            Turning raw data into actionable insights — from&nbsp;SQL&nbsp;pipelines
-            to Python-driven analytics and customer segmentation.
-          </p>
+          <p ref={subRef} className="hero-subtitle">{t.hero.subtitle}</p>
 
           <div ref={ctaRef} className="hero-cta">
             <a
@@ -237,22 +194,27 @@ export default function Hero() {
               className="btn-primary"
               onClick={e => { e.preventDefault(); document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' }) }}
             >
-              <span>View Projects</span>
+              <span>{t.hero.cta1}</span>
             </a>
             <a
               href="#contact"
               className="btn-secondary"
               onClick={e => { e.preventDefault(); document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }) }}
             >
-              Contact Me
+              {t.hero.cta2}
             </a>
           </div>
         </div>
       </div>
 
-      {/* Scroll indicator */}
-      <a ref={scrollRef} className="hero-scroll" href="#about" onClick={handleScroll} aria-label="Scroll to About section">
-        <span>Scroll</span>
+      <a
+        ref={scrollRef}
+        className="hero-scroll"
+        href="#about"
+        onClick={e => { e.preventDefault(); document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' }) }}
+        aria-label="Scroll down"
+      >
+        <span>{t.hero.scroll}</span>
         <div className="scroll-line" />
       </a>
     </section>
