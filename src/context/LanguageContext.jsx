@@ -127,7 +127,7 @@ export const translations = {
     contact: {
       tag:   '04. contatti',
       title: 'Contattami',
-      intro: 'Sono aperta a nuove opportunità — che si tratti di un ruolo full-time, un progetto freelance o semplicemente una chiacchierata sui dati. Contattami tramite uno dei canali qui sotto.',
+      intro: 'Sono aperta a nuove opportunità: che si tratti di un ruolo full-time, un progetto freelance o semplicemente una chiacchierata sui dati. Contattami tramite uno dei canali qui sotto.',
       footerBuilt:    'Realizzato con React + GSAP',
       footerDeployed: 'Deploy su Vercel',
     },
